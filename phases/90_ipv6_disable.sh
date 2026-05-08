@@ -11,7 +11,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 require_root
 
 if [[ "${ENABLE_IPV6_DISABLE:-false}" != "true" ]]; then
-  log "ENABLE_IPV6_DISABLE!=true: SKIP"
+  warn "ENABLE_IPV6_DISABLE!=true のため SKIP — IPv6 無効化は実施されません"
+  warn "有効化するには conf/site.env で ENABLE_IPV6_DISABLE=\"true\" にしてください"
   exit 0
 fi
 

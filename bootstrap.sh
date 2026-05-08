@@ -173,10 +173,38 @@ done
 log "ログ: ${LOG_BASE}"
 
 if (( overall_rc == 0 )); then
+  # 任意機能の最終適用状況。OK だらけのサマリで SKIP が埋もれないよう独立表示。
+  echo
+  log "============================================================"
+  log "適用された任意機能 (site.env の実効値)"
+  log "============================================================"
+  printf '  %-22s : %s\n' "STRICT_MANUAL" "${STRICT_MANUAL}"
+  if [[ -n "${STATIC_IP:-}" ]]; then
+    printf '  %-22s : %s\n' "STATIC_IP" "${STATIC_IP}/${NETMASK_PREFIX:-?} (Phase 80 適用)"
+  else
+    printf '  %-22s : %s\n' "STATIC_IP" "(未設定 → IP固定はGUI側で実施)"
+  fi
+  if [[ "${ENABLE_IPV6_DISABLE:-false}" == "true" ]]; then
+    printf '  %-22s : %s\n' "ENABLE_IPV6_DISABLE" "true (要 reboot で kernel に反映)"
+  else
+    printf '  %-22s : %s\n' "ENABLE_IPV6_DISABLE" "false (Phase 90 SKIP — IPv6 はそのまま)"
+  fi
+  if [[ -n "${EXTRA_PACKAGES:-}" ]]; then
+    printf '  %-22s : %s\n' "EXTRA_PACKAGES" "${EXTRA_PACKAGES}"
+  else
+    printf '  %-22s : %s\n' "EXTRA_PACKAGES" "(なし)"
+  fi
+  if [[ -n "${WEBORCA_ORMASTER_PASSWORD:-}" ]]; then
+    printf '  %-22s : %s\n' "ORMASTER_PASSWORD" "(site.env から自動投入)"
+  else
+    printf '  %-22s : %s\n' "ORMASTER_PASSWORD" "(対話TTY経由で投入)"
+  fi
+
   echo
   log "全フェーズ完了。次のステップ:"
-  cat <<NEXT
-  1. 必要なら IPv6 無効化を反映するために reboot
+  if [[ "${ENABLE_IPV6_DISABLE:-false}" == "true" ]]; then
+    cat <<NEXT
+  1. IPv6 無効化を kernel に反映するため reboot してください
   2. ブラウザから http://${STATIC_IP:-<サーバーIP>}:8000 でログイン確認
      ユーザー: ormaster / パスワード: Phase 60 で設定したもの
   3. 必要に応じて以下を実施 (本スクリプトの責務外):
@@ -185,6 +213,17 @@ if (( overall_rc == 0 )); then
      - CUPS設定  : MaxJobs 0 / プリンタ追加
      - スキーマチェック: jma-receipt-dbscmchk
 NEXT
+  else
+    cat <<NEXT
+  1. ブラウザから http://${STATIC_IP:-<サーバーIP>}:8000 でログイン確認
+     ユーザー: ormaster / パスワード: Phase 60 で設定したもの
+  2. 必要に応じて以下を実施 (本スクリプトの責務外):
+     - DB移行    : /opt/jma/weborca/app/bin/onpre_db_import.sh <dump>
+     - skysh     : ../install_skysh.sh
+     - CUPS設定  : MaxJobs 0 / プリンタ追加
+     - スキーマチェック: jma-receipt-dbscmchk
+NEXT
+  fi
 else
   echo
   err "一部フェーズが失敗しました。${LOG_BASE}/*.log を確認してください。"
