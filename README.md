@@ -27,9 +27,17 @@ WebORCA オンプレ版 (Ubuntu 22.04 LTS / jammy) のベースインストー�
 - `weborca-install` でプログラム最新化 + `systemctl` 再起動
 - `jma-receipt-dbscmchk` でスキーマ整合性チェック
 
+### `install_skysh.sh` (sky.sh カスタマイズ帳票プラグイン導入)
+
+ORCA / WebORCA Ver5.2 系向けに sky.sh のカスタマイズ帳票プラグインを導入する。`bootstrap.sh` の完了後に、必要なら実行する。GUI 側の組込手順 (201 プラグイン → 「組込」) は手動で残る。
+
+- `jppinfo.list` に sky.sh の plugin repo 行を追加
+- 旧 skysh 帳票が入っていれば削除 (uninstall_skysh.pl + `tbl_plugin` 行削除)
+- orca ユーザーへ skysh の GPG 公開鍵をインポート
+- `jma-receipt-weborca` を再起動
+
 ### スコープ外 (別途手動)
 
-- skysh プラグイン (`install_skysh.sh`)
 - CUPS / プリンタ設定
 - アクセスキー登録
 - クライアント (Chrome / fcitx 等) の設定
@@ -50,6 +58,7 @@ sudo apt update && sudo apt install -y curl wget
 weborca-bootstrap/
 ├── bootstrap.sh              ベースインストール 親オーケストレーター
 ├── import-dump.sh            旧 ORCA からのダンプ復元 (一気通貫)
+├── install_skysh.sh          sky.sh プラグイン導入 (GUI 組込手前まで)
 ├── conf/
 │   ├── orca-urls.env         ORCA サーバー URL の単一ソース
 │   ├── site.env.example      コピーして使う設定テンプレート
@@ -124,7 +133,7 @@ VMware Workstation / Fusion などで:
 ## ベース完了後の流れ
 
 ```
-[bootstrap.sh] → (旧サーバーから dump.dmp を /tmp/ に配置) → [import-dump.sh]
+[bootstrap.sh] → (旧サーバーから dump.dmp を /tmp/ に配置) → [import-dump.sh] → (任意) [install_skysh.sh]
 ```
 
 ### 1. ベースインストール完了
@@ -156,9 +165,24 @@ scp old-orca.example.lan:/var/backup/orca-20260508.dmp /tmp/
 
 完了後に再度 `http://<サーバーIP>:8000` を開いて、移行されたデータが見えていれば成功。
 
+### 4. (任意) sky.sh プラグインを入れる
+
+sky.sh のカスタマイズ帳票を使う案件の場合のみ。`bootstrap.sh` と `import-dump.sh` で WebORCA が動いている前提。
+
+```bash
+sudo ./install_skysh.sh
+```
+
+実行後、ブラウザで ORCA 画面を開いて以下を手動で実施 (スクリプトでは自動化していない):
+
+1. 91 マスタ登録
+2. 201 プラグイン
+3. 「スカイエスエイチカスタマイズ帳票」を選択
+4. 「組込」をクリック
+5. 「インストール済み」が ○ になれば完了
+
 ### スコープ外の手動ステップ
 
-- skysh プラグイン: 同梱の `../install_skysh.sh`
 - CUPS: `cupsd.conf` の `MaxJobs 0`、プリンタ追加
 - アクセスキー登録
 - クライアント (Chrome / fcitx 等) の設定
