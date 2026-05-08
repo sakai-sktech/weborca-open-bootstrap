@@ -4,7 +4,9 @@ WebORCA オンプレ版 (Ubuntu 22.04 LTS / jammy) のベースインストー�
 
 ## スコープ
 
-公式マニュアル「日医標準レセプトソフト Ubuntu 22.04 LTS のインストールドキュメント」のうち、**サーバー側のベースインストール完了**までを自動化する:
+公式マニュアル「日医標準レセプトソフト Ubuntu 22.04 LTS のインストールドキュメント」および「日レセ運用環境移行手引き」のうち、**サーバー側の構築〜旧データ移行完了**までを自動化する。
+
+### `bootstrap.sh` (ベースインストール)
 
 - apt 更新と基本パッケージの導入
 - ORCA Keyring と apt-line の追加
@@ -16,11 +18,19 @@ WebORCA オンプレ版 (Ubuntu 22.04 LTS / jammy) のベースインストー�
 - (オプション) IP固定 (nmcli)
 - (オプション) IPv6 無効化 (grub)
 
-**スコープ外** (別スクリプトで対応):
-- DB移行 (`onpre_db_import.sh`)
+### `import-dump.sh` (旧サーバーからのダンプ復元)
+
+旧 ORCA サーバーで取得したダンプファイルを新サーバーに復元する。`bootstrap.sh` の完了後に、必要なら実行する。
+
+- `onpre_db_import.sh` によるリストア (`/tmp/*.dmp` 自動検出 or 引数指定)
+- `jma-setup` による DB 構造変更
+- `weborca-install` でプログラム最新化 + `systemctl` 再起動
+- `jma-receipt-dbscmchk` でスキーマ整合性チェック
+
+### スコープ外 (別途手動)
+
 - skysh プラグイン (`install_skysh.sh`)
 - CUPS / プリンタ設定
-- スキーマチェック / 印字テスト
 - アクセスキー登録
 - クライアント (Chrome / fcitx 等) の設定
 
@@ -28,8 +38,10 @@ WebORCA オンプレ版 (Ubuntu 22.04 LTS / jammy) のベースインストー�
 
 ```
 weborca-bootstrap/
-├── bootstrap.sh              親オーケストレーター
+├── bootstrap.sh              ベースインストール 親オーケストレーター
+├── import-dump.sh            旧 ORCA からのダンプ復元 (一気通貫)
 ├── conf/
+│   ├── orca-urls.env         ORCA サーバー URL の単一ソース
 │   ├── site.env.example      コピーして使う設定テンプレート
 │   └── site.env              (案件ごとに作成)
 ├── lib/
@@ -99,12 +111,44 @@ VMware Workstation / Fusion などで:
 4. `git clone` か `scp` でこのディレクトリを VM 内に配置
 5. `sudo ./bootstrap.sh`
 
-## ベース完了後の手動ステップ
+## ベース完了後の流れ
+
+```
+[bootstrap.sh] → (旧サーバーから dump.dmp を /tmp/ に配置) → [import-dump.sh]
+```
+
+### 1. ベースインストール完了
 
 - IPv6 を無効化した場合は `sudo reboot`
-- ブラウザから `http://<サーバーIP>:8000` でログイン確認
-- 必要に応じて以下を実施:
-  - DB移行: `/opt/jma/weborca/app/bin/onpre_db_import.sh /path/to/dump.dmp`
-  - skysh: 同梱の `../install_skysh.sh`
-  - CUPS: `cupsd.conf` の `MaxJobs 0`、プリンタ追加
-  - 動作確認: `jma-receipt-dbscmchk`
+- ブラウザから `http://<サーバーIP>:8000` でログイン確認 (空の DB が立ち上がる)
+
+### 2. 旧 ORCA サーバーから取得したダンプを `/tmp/` に置く
+
+```bash
+# 例: 旧サーバーで pg_dump 等で取得したファイルを scp / USB 等で持ち込み
+scp old-orca.example.lan:/var/backup/orca-20260508.dmp /tmp/
+```
+
+公式手引きの制約: ダンプは **ホームディレクトリではリストアできない** ので必ず `/tmp/` 配下に置く。
+
+### 3. ダンプ復元スクリプトを実行
+
+```bash
+# /tmp/*.dmp を自動検出 (1個なら確認、2個以上なら番号で選択)
+./import-dump.sh
+
+# 明示指定する場合
+./import-dump.sh /tmp/orca-20260508.dmp
+```
+
+`import-dump.sh` は **root では実行しない**。必要なステップで内部から `sudo` を呼ぶ。
+処理内容: リストア → `jma-setup` → `weborca-install` 最新化 + 再起動 → スキーマ整合性チェック。
+
+完了後に再度 `http://<サーバーIP>:8000` を開いて、移行されたデータが見えていれば成功。
+
+### スコープ外の手動ステップ
+
+- skysh プラグイン: 同梱の `../install_skysh.sh`
+- CUPS: `cupsd.conf` の `MaxJobs 0`、プリンタ追加
+- アクセスキー登録
+- クライアント (Chrome / fcitx 等) の設定
