@@ -6,16 +6,16 @@ set -Eeuo pipefail
 
 # shellcheck source=../lib/common.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
+# shellcheck source=../conf/orca-urls.env
+source "$(dirname "${BASH_SOURCE[0]}")/../conf/orca-urls.env"
 
 require_root
 
 KEYRING_DIR="/etc/apt/keyrings"
 KEYRING_FILE="${KEYRING_DIR}/jma.asc"
-KEYRING_URL="https://ftp.orca.med.or.jp/pub/ubuntu/archive.key"
 
 LIST_DIR="/etc/apt/sources.list.d"
 LIST_FILE="${LIST_DIR}/jma-receipt-weborca-jammy10.list"
-LIST_URL="https://ftp.orca.med.or.jp/pub/ubuntu/jma-receipt-weborca-jammy10.list"
 
 ensure_dir "$KEYRING_DIR"
 

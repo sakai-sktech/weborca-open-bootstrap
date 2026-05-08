@@ -9,6 +9,8 @@ set -Eeuo pipefail
 
 # shellcheck source=../lib/common.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
+# shellcheck source=../conf/orca-urls.env
+source "$(dirname "${BASH_SOURCE[0]}")/../conf/orca-urls.env"
 
 require_root
 require_jammy
@@ -17,9 +19,9 @@ for c in wget curl ss systemctl awk grep apt-get dpkg-query; do
   need_cmd "$c"
 done
 
-# インターネット疎通
-log "ORCAサーバーへの疎通を確認します"
-if ! curl -4 -sSf --max-time 10 -o /dev/null https://ftp.orca.med.or.jp/pub/ubuntu/archive.key ; then
+# インターネット疎通: Phase 20 が実際に取りに行く URL をそのまま叩く
+log "ORCAサーバーへの疎通を確認します: ${PROBE_URL}"
+if ! curl -4 -sSf --max-time 10 -o /dev/null "${PROBE_URL}" ; then
   die "ftp.orca.med.or.jp に到達できません。ネットワークを確認してください。"
 fi
 log "疎通OK: ftp.orca.med.or.jp"
