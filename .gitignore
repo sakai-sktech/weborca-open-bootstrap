@@ -1,0 +1,17 @@
+# 現場ごとの site.env (パスワードを含む想定)
+conf/site.env
+
+# 自前 backup_file() が落とす .bak (リポジトリ内ファイルが対象になった場合用)
+*.bak
+*.bak.*
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor / OS
+*.swp
+*~
+.DS_Store
+.idea/
+.vscode/
