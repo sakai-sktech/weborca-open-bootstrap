@@ -34,6 +34,16 @@ WebORCA オンプレ版 (Ubuntu 22.04 LTS / jammy) のベースインストー�
 - アクセスキー登録
 - クライアント (Chrome / fcitx 等) の設定
 
+## 前提
+
+Ubuntu 22.04 LTS の **最小インストール直後** では `curl` と `wget` が入っていません。`bootstrap.sh` の preflight (Phase 00) でこれらを必須としているため、先にインストールしてください:
+
+```bash
+sudo apt update && sudo apt install -y curl wget
+```
+
+その他の前提コマンド (`ss`, `systemctl`, `awk`, `grep`, `apt-get`, `dpkg-query`, `tar`, `find`, `sudo`) は通常の Ubuntu に標準で入っています。
+
 ## ファイル構成
 
 ```

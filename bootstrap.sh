@@ -88,7 +88,7 @@ SITE_ENV="${CONF_DIR}/site.env"
 if [[ ! -f "$SITE_ENV" ]]; then
   err "${SITE_ENV} が見つかりません。"
   err "  cp ${CONF_DIR}/site.env.example ${SITE_ENV}"
-  err "  $EDITOR ${SITE_ENV}"
+  err "  ${EDITOR:-vi} ${SITE_ENV}"
   exit 2
 fi
 # shellcheck disable=SC1090
