@@ -19,7 +19,7 @@ done
 
 # インターネット疎通
 log "ORCAサーバーへの疎通を確認します"
-if ! curl -sSf --max-time 10 -o /dev/null https://ftp.orca.med.or.jp/pub/ubuntu/ ; then
+if ! curl -4 -sSf --max-time 10 -o /dev/null https://ftp.orca.med.or.jp/pub/ubuntu/ ; then
   die "ftp.orca.med.or.jp に到達できません。ネットワークを確認してください。"
 fi
 log "疎通OK: ftp.orca.med.or.jp"

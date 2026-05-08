@@ -23,7 +23,7 @@ if [[ -s "$KEYRING_FILE" ]]; then
   log "keyring 導入済み: $KEYRING_FILE"
 else
   log "keyring 取得: $KEYRING_URL"
-  run_cmd wget -q -O "$KEYRING_FILE" "$KEYRING_URL"
+  run_cmd wget -4 -q -O "$KEYRING_FILE" "$KEYRING_URL"
   [[ -s "$KEYRING_FILE" ]] || die "keyring 取得後の検証に失敗"
 fi
 
@@ -31,11 +31,11 @@ if [[ -s "$LIST_FILE" ]]; then
   log "apt-line 導入済み: $LIST_FILE"
 else
   log "apt-line 取得: $LIST_URL"
-  run_cmd wget -q -O "$LIST_FILE" "$LIST_URL"
+  run_cmd wget -4 -q -O "$LIST_FILE" "$LIST_URL"
   [[ -s "$LIST_FILE" ]] || die "apt-line 取得後の検証に失敗"
 fi
 
 log "apt update を実行"
-run_cmd apt-get update
+run_cmd apt-get -o Acquire::ForceIPv4=true update
 
 log "Phase 20 完了"

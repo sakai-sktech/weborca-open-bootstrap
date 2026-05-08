@@ -78,7 +78,7 @@ wait_for_http() {
   while :; do
     # 200/30x なら成功扱い、500台でも応答が返るならアプリ起動済とみなす
     local code
-    code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 "$url" 2>/dev/null || echo 000)"
+    code="$(curl -4 -s -o /dev/null -w '%{http_code}' --max-time 3 "$url" 2>/dev/null || echo 000)"
     if [[ "$code" =~ ^(2|3|4|5)[0-9][0-9]$ ]] && [[ "$code" != "000" ]]; then
       log "${url} がHTTP応答を返しました (code=$code, ${i}秒)"
       return 0
