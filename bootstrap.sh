@@ -86,9 +86,12 @@ require_root
 # ---- site.env 読み込み ------------------------------------------------
 SITE_ENV="${CONF_DIR}/site.env"
 if [[ ! -f "$SITE_ENV" ]]; then
-  err "${SITE_ENV} が見つかりません。"
-  err "  cp ${CONF_DIR}/site.env.example ${SITE_ENV}"
-  err "  ${EDITOR:-vi} ${SITE_ENV}"
+  warn "${SITE_ENV} が見つかりません。site.env.example からコピーします。"
+  cp -a "${CONF_DIR}/site.env.example" "$SITE_ENV"
+  err "コピー完了: $SITE_ENV"
+  err "中身を確認・編集してから再実行してください:"
+  err "  ${EDITOR:-editor} ${SITE_ENV}"
+  err "  sudo $0"
   exit 2
 fi
 # shellcheck disable=SC1090
