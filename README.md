@@ -36,9 +36,29 @@ ORCA / WebORCA Ver5.2 系向けに sky.sh のカスタマイズ帳票プラグ�
 - orca ユーザーへ skysh の GPG 公開鍵をインポート
 - `jma-receipt-weborca` を再起動
 
+### `mk_cups-pdf_printer.sh` (CUPS PDF 仮想プリンタ設定)
+
+`cups-pdf` パッケージを使った PDF 仮想プリンタ (lp1=A4 / lp2=A5) を登録する。`bootstrap.sh` 完了後、必要なら実行する。
+
+- 既存の `lp1` / `lp2` を先に削除してから再登録 (冪等)
+- `CUPS-PDF_opt.ppd` を使って `cups-pdf:/` デバイスに紐づけ
+
+前提: `sudo apt install -y cups cups-pdf` が済んでいること。
+
+### `set_share-onspdf.sh` (Samba Windows 共有設定)
+
+`/mnt/onshi/pdf` を Samba 共有 `onspdf` として Windows から読み書きできるようにする。`bootstrap.sh` 完了後、必要なら実行する。
+
+- Samba / smbclient のインストール
+- `ormaster` ユーザーの Samba パスワード設定 (対話)
+- `smb.conf` に共有ブロックを追記 (重複排除・バックアップ付き)
+- `smbd` / `nmbd` の再起動
+
+前提: `ormaster` と `orca` ユーザーが存在し、`/mnt/onshi/pdf` ディレクトリが存在すること。
+
 ### スコープ外 (別途手動)
 
-- CUPS / プリンタ設定
+- CUPS: 物理プリンタの追加・`cupsd.conf` 調整 (PDF 仮想プリンタは `mk_cups-pdf_printer.sh` で自動化済み)
 - アクセスキー登録
 - クライアント (Chrome / fcitx 等) の設定
 
@@ -59,6 +79,8 @@ weborca-bootstrap/
 ├── bootstrap.sh              ベースインストール 親オーケストレーター
 ├── import-dump.sh            旧 ORCA からのダンプ復元 (一気通貫)
 ├── install_skysh.sh          sky.sh プラグイン導入 (GUI 組込手前まで)
+├── mk_cups-pdf_printer.sh    CUPS PDF 仮想プリンタ登録 (lp1=A4 / lp2=A5)
+├── set_share-onspdf.sh       Samba Windows 共有設定 (onspdf)
 ├── conf/
 │   ├── orca-urls.env         ORCA サーバー URL の単一ソース
 │   ├── site.env.example      コピーして使う設定テンプレート
@@ -133,7 +155,11 @@ VMware Workstation / Fusion などで:
 ## ベース完了後の流れ
 
 ```
-[bootstrap.sh] → (旧サーバーから dump.dmp を /tmp/ に配置) → [import-dump.sh] → (任意) [install_skysh.sh]
+[bootstrap.sh] → (旧サーバーから dump.dmp を /tmp/ に配置) → [import-dump.sh]
+                                                                     ↓ (任意・独立)
+                                                          [install_skysh.sh]
+                                                          [mk_cups-pdf_printer.sh]
+                                                          [set_share-onspdf.sh]
 ```
 
 ### 1. ベースインストール完了
@@ -181,8 +207,29 @@ sudo ./install_skysh.sh
 4. 「組込」をクリック
 5. 「インストール済み」が ○ になれば完了
 
+### 5. (任意) CUPS PDF 仮想プリンタを登録する
+
+`cups-pdf` による PDF 出力プリンタを使う案件の場合のみ。
+
+```bash
+sudo apt install -y cups cups-pdf
+sudo ./mk_cups-pdf_printer.sh
+```
+
+lp1 (A4) と lp2 (A5) が登録される。物理プリンタは別途 `lpadmin` で追加すること。
+
+### 6. (任意) Windows 共有を設定する
+
+オンシ PDF (`/mnt/onshi/pdf`) を Windows から参照する場合のみ。`/mnt/onshi/pdf` ディレクトリが存在することを先に確認すること。
+
+```bash
+sudo ./set_share-onspdf.sh
+```
+
+途中で `ormaster` の Samba パスワード入力を求められる。完了後、Windows から `\\<サーバーIP>\onspdf` でアクセスできる。
+
 ### スコープ外の手動ステップ
 
-- CUPS: `cupsd.conf` の `MaxJobs 0`、プリンタ追加
+- CUPS: 物理プリンタの追加・`cupsd.conf` 調整 (`MaxJobs 0` 等)
 - アクセスキー登録
 - クライアント (Chrome / fcitx 等) の設定
